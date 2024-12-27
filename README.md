@@ -1,6 +1,4 @@
-# Ravi QGIS Plugin
-
-# RAVI Plugin
+# RAVI - Remote Analysis of Vegetation Indices
 
 RAVI is a QGIS plugin designed for seamless integration with Google Earth Engine (GEE) to process and visualize geospatial data, with a particular focus on Sentinel-2 imagery. The plugin supports vegetation index calculations, time series analysis, and interactive visualization, making it a valuable tool for researchers, farmers, and GIS enthusiasts working in agriculture, land monitoring, or environmental studies.
 
@@ -49,39 +47,32 @@ To install the Ravi QGIS Plugin, follow these steps:
 ## Usage
 
 ### Step 1: Authentication
+![Step 1](media/step1.png)
 - Open the plugin dialog.
 - Authenticate with Google Earth Engine using your credentials.
 
 ### Step 2: Load AOI
+![Step 2](media/step2.png)
 - Select an AOI by loading a shapefile or GeoJSON file.
 - Ensure the geometry is valid (Polygon or MultiPolygon).
 
 ### Step 3: Configure Parameters
+![Step 3](media/step3.png)
 - Set the desired vegetation index, metric, date range, and cloud coverage thresholds.
-- Optionally, configure filtering and smoothing parameters for time series.
+
 
 ### Step 4: Process and Visualize
+![Step 4](media/step4.png)
 - Click on the respective buttons to download imagery, calculate indices, or generate time series.
-- Visualize results in the interactive Plotly charts or add styled raster layers to QGIS.
+- Optionally, apply clould filtering and smoothing parameters for time series.
+- Export vegetation indices, time series data, or processed imagery in various formats (e.g., GeoTIFF, CSV).
 
-## Requirements
-
-- QGIS 3.x
-- Google Earth Engine API (`earthengine-api==1.3.1`)
-- Python libraries:
-  - PyQt5
-  - pandas
-  - numpy
-  - scipy
-  - geopandas
-  - requests
-  - Plotly
 
 ## Troubleshooting
 
 - **Earth Engine Authentication Failed**: Ensure you have installed the Earth Engine API and authenticated correctly.
 - **AOI Errors**: Verify the AOI file is valid and has the correct CRS (EPSG:4326 preferred).
-- **Visualization Issues**: Ensure all required Python libraries are installed.
+
 
 ## Contributing
 
@@ -93,4 +84,4 @@ This plugin is licensed under the GNU General Public License v2.0 or later. See 
 
 ## Contact
 
-For questions or support, please contact [Caio Arantes](mailto:github.com/caioarantes).
+For questions or support, please contact [Caio Arantes](mailto:caiosimplicioarantes@gmail.com).

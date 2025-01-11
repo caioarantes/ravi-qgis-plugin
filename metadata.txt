@@ -6,11 +6,11 @@
 name=RAVI
 qgisMinimumVersion=3.0
 description=Remote Analysis of Vegetation Indices
-version=0.1
+version=0.2
 author=Caio Arantes
 email=caiosimplicioarantes@gmail.com
 
-about=RAVI is a QGIS plugin designed for seamless integration with Google Earth Engine (GEE) to process and visualize geospatial data, with a particular focus on Sentinel-2 imagery. The plugin supports vegetation index calculations, time series analysis, and interactive visualization, making it a valuable tool for researchers, farmers, and GIS enthusiasts working in agriculture, land monitoring, or environmental studies.
+about=RAVI is a QGIS plugin designed for seamless integration with Google Earth Engine (GEE) to process and visualize geospatial data, with a particular focus on Sentinel-2 imagery. The plugin supports vegetation index calculations, time series analysis, and interactive visualization, making it a valuable tool for students, researchers, farmers, and GIS enthusiasts working in agriculture, land monitoring, or environmental studies.
 
 tracker=https://github.com/caioarantes/ravi-qgis-plugin/issues
 repository=https://github.com/caioarantes/ravi-qgis-plugin

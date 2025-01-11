@@ -1,48 +1,48 @@
 # RAVI - Remote Analysis of Vegetation Indices
 
-RAVI is a QGIS plugin designed for seamless integration with Google Earth Engine (GEE) to process and visualize geospatial data, with a particular focus on Sentinel-2 imagery. The plugin supports vegetation index calculations, time series analysis, and interactive visualization, making it a valuable tool for researchers, farmers, and GIS enthusiasts working in agriculture, land monitoring, or environmental studies.
+RAVI is an QGIS plugin designed to seamlessly integrate with Google Earth Engine (GEE), enabling efficient processing and visualization of geospatial data. With its focus on Sentinel-2 imagery, the plugin supports vegetation index calculations, time series analysis, and interactive visualizations. These features make it an useful tool for students, researchers, farmers, and GIS professionals working in agriculture, land monitoring, or environmental management.
 
-## Features
+## Key Features
 
 ### 1. Earth Engine Integration
-- **Authentication and Initialization**: Easily authenticate and initialize GEE for geospatial operations.
-- **Imagery Processing**: Download, clip, and analyze Sentinel-2 imagery directly within QGIS.
-
+- **Easy Authentication**: Authenticate with GEE directly from the plugin interface.
+- **Direct Processing**: Access, process, and analyze Sentinel-2 imagery without leaving QGIS.
+- **On-the-Fly Visualization**: Visualize processed data as raster layers or interactive plots.
 
 ### 2. Vegetation Index Calculations
-- Supports popular indices like NDVI, EVI, SAVI, GNDVI, and GCI.
-- Customizable metric-based compositing: mean, max, min, median, or amplitude.
+- **Supported Indices**: Compute indices such as NDVI, EVI, SAVI, GNDVI, and GCI.
+- **Customizable Metrics**: Aggregate data using mean, max, min, median, amplitude, or standard deviation.
 
-### 3. Time Series Analysis
-- Generate time series for vegetation indices over a selected Area of Interest (AOI).
-- Filter and smooth data using Savitzky-Golay filtering.
-- Compare time series with precipitation data from NASA POWER.
+### 3. Advanced Time Series Analysis
+- Generate time series for vegetation indices over a defined Area of Interest (AOI).
+- Integrate precipitation data from NASA POWER for cross-variable comparisons.
+- Smooth data with Savitzky-Golay filters for enhanced trend analysis.
 
-### 4. AOI and Date Filtering
-- Load AOI from shapefiles or GeoJSON files.
-- Filter imagery by date ranges and cloud coverage thresholds.
+### 4. AOI and Filtering Tools
+- **AOI Management**: Load areas of interest from shapefiles or GeoJSON files.
+- **Flexible Filtering**:
+  - Set date ranges and cloud coverage thresholds.
+  - Apply custom cloud, snow, and shadow masking.
 
-### 5. Custom Cloud Filtering
-- **Cloud Ratio Threshold**: Set a custom threshold to filter out images based on cloud cover ratio.
-- **Masking**: Remove pixels based on cloud, snow, and shadow masks to utilize partially cloudy imagery.
+### 5. Interactive Visualization
+- **Charts**: Create interactive time series plots using Plotly.
+- **Raster Styling**: Apply predefined color ramps (e.g., RdYlGn) for visual clarity.
+- **Export Options**: Export processed data as GeoTIFFs, CSVs, or styled rasters.
 
-### 6. Visualization
-- Interactive charts using Plotly for time series.
-- Custom raster styling with predefined color ramps for NDVI and other indices.
-
+### 6. Comprehensive Imagery Management
+- **Date Filtering**: Filter individual images by acquisition date.
+- **Cloud Filtering**: Exclude or mask cloudy pixels while preserving usable data.
+- **Composite Creation**: Generate composite images based on user-defined metrics.
 
 ## Installation
 
-To install the Ravi QGIS Plugin, follow these steps:
+To install the RAVI QGIS Plugin:
 
-1. Open QGIS and navigate to the Plugins menu.
-2. Select "Manage and Install Plugins".
-3. Check the box for "Show also experimental plugins" to enable experimental plugins.
-4. Search for "Ravi QGIS Plugin" in the plugin repository.
-5. Click "Install" to add the plugin to your QGIS installation.
-6. Enable the plugin in the Installed tab.
-7. Restart QGIS to complete the installation process.
-
+1. Open QGIS and navigate to the **Plugins** menu.
+2. Select **Manage and Install Plugins**.
+3. Enable **Show also experimental plugins** in the plugin repository settings.
+4. Search for "RAVI QGIS Plugin" and click **Install**.
+5. Restart QGIS to activate the plugin.
 
 ## Usage
 
@@ -51,37 +51,93 @@ To install the Ravi QGIS Plugin, follow these steps:
 - Open the plugin dialog.
 - Authenticate with Google Earth Engine using your credentials.
 
-### Step 2: Load AOI
+### Step 2: Select output folder
 ![Step 2](media/step2.png)
+- Choose the folder where you want to save the output files.
+
+### Step 3: Load and select the area of interest (AOI)
+![Step 3](media/step3.png)
 - Select an AOI by loading a shapefile or GeoJSON file.
 - Ensure the geometry is valid (Polygon or MultiPolygon).
 
-### Step 3: Configure Parameters
-![Step 3](media/step3.png)
+### Step 4: Define time range for imagery search
+![Step 4](media/step4.png)
 - Set the desired vegetation index, metric, date range, and cloud coverage thresholds.
 
+### Step 5: Select vegetation index for time series analysis
+![Step 5](media/step5.png)
+- Choose the vegetation index you want to analyze from the dropdown menu.
 
-### Step 4: Process and Visualize
-![Step 4](media/step4.png)
-- Click on the respective buttons to download imagery, calculate indices, or generate time series.
-- Optionally, apply clould filtering and smoothing parameters for time series.
-- Export vegetation indices, time series data, or processed imagery in various formats (e.g., GeoTIFF, CSV).
+### Step 6: AOI coverage filter and AOI Buffer filter options
+![Step 6](media/step6.png)
+- Apply AOI coverage filter to include only images covering a specified percentage of the AOI.
+- Use AOI Buffer filter to reduce the AOI boundary for analysis.
 
+### Step 7: Cloud pixel percentage limit and valid pixel percentage threshold in the AOI
+![Step 7](media/step7.png)
+- Set the maximum allowable cloud pixel percentage within the AOI.
+- Define the minimum valid pixel percentage threshold to ensure data quality.
+
+### Results Page
+
+The results includes the following main features:
+
+### 1. Time Series Plot
+![1](/media/results1.png)
+- Visualize the time series of the selected vegetation index over the defined AOI.
+- Hover over the plot to see specific values and dates for detailed analysis.
+
+### 2. Load RGB Layer (Focus on a Day)
+![2](/media/results2.png)
+- Load and display an RGB layer for a specific date to analyze the visual appearance of the area.
+
+### 3. Load Index Layer (Focus on a Day)
+![3](/media/results3.png)
+- Load and display a vegetation index layer for a specific date.
+
+### 4. Load Index Layer (Composite Image)
+![4](/media/results4.png)
+- Generate and display a composite image based on the selected vegetation index and the user-defined metric.
+- The composite image will include all images within the current date selection. Use the date selection tool to filter out specific dates.
+
+### 5. Date Selection Tool
+![5](/media/results5.png)
+- Use the date selection tool to filter and select specific dates for analysis.
+- The date selection tool updates the time series plot
+- Composite images are based on all selected dates.
+
+### 6. Savitzky-Golay Filter
+![6](/media/results6.png)
+- Apply the Savitzky-Golay filter to smooth the time series data for enhanced trend analysis.
+- The parameters for the Savitzky-Golay algorithm, such as the order of the polynomial and the window length, can be adjusted as needed to fine-tune the smoothing process.
+
+### 7. Save Options
+![7](/media/results7.png)
+![71](/media/results71.png)
+- Save the time series data in spreasheet format (CSV).
+- To save the time series plot image, open it in the browser to enable the download option.
+
+### 8. NASA POWER Precipitation
+![8](/media/results8.png)
+- Add monthly precipitation data from NASA POWER for cross-variable comparisons.
+
+### 9. Clear All Loaded Layers
+![9](/media/results9.png)
+- Clear all loaded layers from the layer panel to start a new analysis or to declutter the workspace.
 
 ## Troubleshooting
 
-- **Earth Engine Authentication Failed**: Ensure you have installed the Earth Engine API and authenticated correctly.
-- **AOI Errors**: Verify the AOI file is valid and has the correct CRS (EPSG:4326 preferred).
-
+- **Earth Engine Authentication Failed**: Ensure you have logged in with your Google Earth Engine account and have the necessary project permissions as explained in the authentication steps.
+- **AOI Errors**: Verify the AOI file is valid and has a valid CRS (EPSG:4326 preferred).
 
 ## Contributing
 
-Contributions are welcome! Feel free to fork the repository and submit pull requests for bug fixes, new features, or documentation improvements.
+Contributions are welcome! Fork the [repository](https://github.com/caioarantes) to submit bug fixes, new features, or documentation improvements.
 
 ## License
 
-This plugin is licensed under the GNU General Public License v2.0 or later. See the LICENSE file for details.
+RAVI is licensed under the GNU General Public License v2.0 or later. Refer to the LICENSE file for details.
 
 ## Contact
 
-For questions or support, please contact [Caio Arantes](mailto:caiosimplicioarantes@gmail.com).
+For questions or support, email [Caio Arantes](mailto:caiosimplicioarantes@gmail.com).

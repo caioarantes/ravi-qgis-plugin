@@ -25,6 +25,7 @@ import os
 import sys
 import importlib
 import platform
+import subprocess
 import zipfile
 import json
 import webbrowser
@@ -38,7 +39,7 @@ from PyQt5.QtCore import QDate, Qt, QVariant
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QLabel, QMessageBox, QFileDialog, QGridLayout, 
     QWidget, QDesktopWidget, QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox, 
-    QDateEdit, QScrollArea, QPushButton, QHBoxLayout, QToolButton
+    QDateEdit, QScrollArea, QPushButton, QHBoxLayout, QToolButton, QTextBrowser
 )
 from qgis.PyQt import uic, QtWidgets
 from qgis.core import (
@@ -48,10 +49,12 @@ from qgis.core import (
     QgsCoordinateReferenceSystem, QgsCoordinateTransform, 
     QgsMultiBandColorRenderer, QgsContrastEnhancement, 
     QgsProcessingFeedback, QgsApplication, QgsRectangle, 
-    QgsFeature, QgsGeometry, QgsField, QgsVectorFileWriter
+    QgsFeature, QgsGeometry, QgsField, QgsVectorFileWriter,
 )
 from qgis.utils import iface
 import qgis
+
+from PyQt5.QtWidgets import QSizePolicy
 
 # Scientiffic and data processing libraries
 import pandas as pd
@@ -113,7 +116,7 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)  
 
-        self.resizeEvent('pequeno')
+        self.resizeEvent('small')
         self.tabWidget.setCurrentIndex(0)
 
         # Connect signals and slots
@@ -126,33 +129,47 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         self.composicao.clicked.connect(self.composicao_clicked)
         self.clear_raster.clicked.connect(self.clear_all_raster_layers)
         self.hybrid.clicked.connect(self.hybrid_function)
-        self.pushButtonNext.clicked.connect(self.next_clicked)
+        self.QPushButton_next.clicked.connect(self.next_clicked)
+        self.QPushButton_next_2.clicked.connect(self.next_clicked)
+        self.QPushButton_next_3.clicked.connect(self.next_clicked)
+        self.QPushButton_next_4.clicked.connect(self.next_clicked)
+        self.QPushButton_next_5.clicked.connect(self.next_clicked)
         self.QPushButton_back.clicked.connect(self.back_clicked)
+        self.QPushButton_back_2.clicked.connect(self.back_clicked)
+        self.QPushButton_back_3.clicked.connect(self.back_clicked)
+        self.QPushButton_back_4.clicked.connect(self.back_clicked)
+        self.QPushButton_back_5.clicked.connect(self.back_clicked)
+        self.QPushButton_back_7.clicked.connect(self.back_clicked)
         self.loadtimeseries.clicked.connect(self.loadtimeseries_clicked)
         self.navegador.clicked.connect(self.open_browser)
         self.datasrecorte.clicked.connect(self.datasrecorte_clicked)
         self.salvar.clicked.connect(self.salvar_clicked)
         self.build_vector_layer.clicked.connect(self.build_vector_layer_clicked)
-        self.apply_filter.clicked.connect(self.apply_filter_clicked)
+
         self.filtro1.stateChanged.connect(self.plot_timeseries)
         self.filtro_grau.currentIndexChanged.connect(self.plot_timeseries)
         self.window_len.currentIndexChanged.connect(self.plot_timeseries)
         self.vector_layer_combobox.currentIndexChanged.connect(self.get_selected_layer_path)
         self.mQgsFileWidget.fileChanged.connect(self.on_file_changed)  
-        self.customfilter.clicked.connect(self.custom_filter_clicked)
+
+        self.radioButton_3months.clicked.connect(self.last_3m_clicked)
+        self.radioButton_6months.clicked.connect(self.last_6m_clicked)
         self.radioButton_year.clicked.connect(self.last_year_clicked)
         self.radioButton_3years.clicked.connect(self.last_3_years_clicked)
         self.radioButton_5years.clicked.connect(self.last_5_years_clicked)  
         self.radioButton_select_year.clicked.connect(self.selected_year_clicked)
         self.combo_year.currentIndexChanged.connect(self.selected_year_clicked)
-        self.horizontalSlider.valueChanged.connect(self.update_labels)
-        self.horizontalSlider_2.valueChanged.connect(self.update_labels)
-        self.horizontalSlider_3.valueChanged.connect(self.update_labels)
+        self.horizontalSlider_local_pixel_limit.valueChanged.connect(self.update_labels)
+        self.horizontalSlider_aio_cover.valueChanged.connect(self.update_labels)
+        self.horizontalSlider_buffer.valueChanged.connect(self.update_labels)
+        self.horizontalSlider_total_pixel_limit.valueChanged.connect(self.update_labels)
         self.textEdit.setReadOnly(True)  # Prevent editing
         self.textEdit.setTextInteractionFlags(Qt.TextBrowserInteraction)
         self.nasapower.clicked.connect(self.open_nasapower)
         self.clear_nasa.clicked.connect(self.clear_nasa_clicked)
-        self.textEdit.anchorClicked.connect(self.open_link)  
+        self.textEdit.anchorClicked.connect(self.open_link)
+        self.moreinfo_day.clicked.connect(self.open_more_info_day)
+        self.series_indice.currentIndexChanged.connect(self.index_explain)
         
         # Set default dates
         self.last_year_clicked()
@@ -171,6 +188,193 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         self.selected_dates = []
         self.output_folder = None
         self.df_nasa = None
+        self.resizeEvent('small')
+        self.index_explain()
+
+    def open_more_info_day(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("More Information")
+        dialog.setGeometry(100, 100, 800, 600)
+
+        layout = QVBoxLayout(dialog)
+
+        # Create a QTextBrowser to display HTML content
+        text_browser = QTextBrowser(dialog)
+        text_browser.setHtml("""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Load RGB layer</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        margin: 20px;
+                    }
+                    h1, h2 {
+                        color: #2c3e50;
+                    }
+                    table {
+                        border-collapse: collapse;
+                        width: 100%;
+                        margin-top: 20px;
+                    }
+                    th, td {
+                        border: 1px solid #ccc;
+                        padding: 8px;
+                        text-align: left;
+                    }
+                    th {
+                        background-color: #f4f4f4;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Load RGB layer</h1>
+                <p>
+                    This feature allows users to select a date from a dropdown list and display the corresponding Sentinel-2 RGB image 
+                    (using red, green, and blue bands) in QGIS. It fetches the first available Sentinel-2 image for the selected date, 
+                    clips it to the defined area of interest (AOI), and adds it to the QGIS canvas as an RGB layer.
+                </p>
+
+                <h2>How It Works</h2>
+                <ol>
+                    <li>
+                        The user selects a date from the dropdown list and clicks the button.
+                    </li>
+                    <li>
+                        The function retrieves the first Sentinel-2 image available for that date.
+                    </li>
+                    <li>
+                        The image is clipped to the area of interest (AOI) specified in the project.
+                    </li>
+                    <li>
+                        The image is downloaded in GeoTIFF format and added to QGIS as a raster layer with RGB visualization:
+                        <ul>
+                            <li><strong>Red:</strong> Band 4</li>
+                            <li><strong>Green:</strong> Band 3</li>
+                            <li><strong>Blue:</strong> Band 2</li>
+                        </ul>
+                    </li>
+                    <li>
+                        The layer is automatically styled for contrast enhancement and added to the top of the QGIS layer stack.
+                    </li>
+                </ol>
+
+                <h2>Sentinel-2 Band Mapping</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sentinel-2 Band Name</th>
+                            <th>QGIS Band Number</th>
+                            <th>Wavelength (nm)</th>
+                            <th>Spatial Resolution (m)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Band 1 (Coastal aerosol)</td>
+                            <td>1</td>
+                            <td>443</td>
+                            <td>60</td>
+                        </tr>
+                        <tr>
+                            <td>Band 2 (Blue)</td>
+                            <td>2</td>
+                            <td>490</td>
+                            <td>10</td>
+                        </tr>
+                        <tr>
+                            <td>Band 3 (Green)</td>
+                            <td>3</td>
+                            <td>560</td>
+                            <td>10</td>
+                        </tr>
+                        <tr>
+                            <td>Band 4 (Red)</td>
+                            <td>4</td>
+                            <td>665</td>
+                            <td>10</td>
+                        </tr>
+                        <tr>
+                            <td>Band 5 (Vegetation Red Edge)</td>
+                            <td>5</td>
+                            <td>705</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Band 6 (Vegetation Red Edge)</td>
+                            <td>6</td>
+                            <td>740</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Band 7 (Vegetation Red Edge)</td>
+                            <td>7</td>
+                            <td>783</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Band 8 (NIR)</td>
+                            <td>8</td>
+                            <td>842</td>
+                            <td>10</td>
+                        </tr>
+                        <tr>
+                            <td>Band 8A (Vegetation Red Edge)</td>
+                            <td>9</td>
+                            <td>865</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Band 9 (Water Vapour)</td>
+                            <td>10</td>
+                            <td>945</td>
+                            <td>60</td>
+                        </tr>
+                        <tr>
+                            <td>Band 10 (SWIR - Cirrus)</td>
+                            <td>11</td>
+                            <td>1375</td>
+                            <td>60</td>
+                        </tr>
+                        <tr>
+                            <td>Band 11 (SWIR)</td>
+                            <td>12</td>
+                            <td>1610</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Band 12 (SWIR)</td>
+                            <td>13</td>
+                            <td>2190</td>
+                            <td>20</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Notes</h2>
+                <ul>
+                    <li>The RGB visualization uses Band 4 (Red), Band 3 (Green), and Band 2 (Blue).</li>
+                    <li>The function automatically adjusts the layer contrast for better visualization.</li>
+                    <li>Downloaded image is available on the selected output folder.</li>
+
+                </ul>
+            </body>
+            </html>
+
+        """)
+
+        layout.addWidget(text_browser)
+
+        # Add OK button to close the dialog
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok, dialog)
+        button_box.accepted.connect(dialog.accept)
+        layout.addWidget(button_box)
+
+        dialog.exec_()
 
     def clear_nasa_clicked(self):
         """
@@ -249,11 +453,12 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         The values are retrieved from the corresponding horizontal sliders:
         - horizontalSlider: Used for the custom filter percentage.
         - horizontalSlider_2: Used for the coverage percentage.
-        - horizontalSlider_3: Used for the cloud coverage percentage.
+        - horizontalSlider_total_pixel_limit: Used for the cloud coverage percentage.
         """
-        self.customfilter.setText(f"Custom filter (At least {self.horizontalSlider.value()}% non-cloudy pixels within AOI)")
-        self.label_coverage.setText(str(self.horizontalSlider_2.value()) + "%")
-        self.label_cloud.setText(str(self.horizontalSlider_3.value()) + "%")
+        self.label_cloud_aoi.setText(f"{self.horizontalSlider_local_pixel_limit.value()}%")
+        self.label_coverage.setText(f"{self.horizontalSlider_aio_cover.value()}%")
+        self.label_cloud.setText(f"{self.horizontalSlider_total_pixel_limit.value()}%")
+        self.label_buffer.setText(f"{self.horizontalSlider_buffer.value()}m")
 
     def custom_filter_clicked(self):
         """
@@ -278,15 +483,19 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         print(f"Opening URL: {url.toString()}")
         webbrowser.open(url.toString())
 
+    def last_6m_clicked(self):
+        today = datetime.today().strftime('%Y-%m-%d')
+        one_month_ago = (datetime.today() - relativedelta(months=6)).strftime('%Y-%m-%d')
+        self.finaledit.setDate(QDate.fromString(today, 'yyyy-MM-dd'))
+        self.incioedit.setDate(QDate.fromString(one_month_ago, 'yyyy-MM-dd'))
+
+    def last_3m_clicked(self):
+        today = datetime.today().strftime('%Y-%m-%d')
+        one_month_ago = (datetime.today() - relativedelta(months=3)).strftime('%Y-%m-%d')
+        self.finaledit.setDate(QDate.fromString(today, 'yyyy-MM-dd'))
+        self.incioedit.setDate(QDate.fromString(one_month_ago, 'yyyy-MM-dd'))
+
     def last_year_clicked(self):
-        """
-        Slot method to handle the event when the 'last year' button is clicked.
-
-        This method sets the date range in the UI to the last year from today's date.
-        It updates the 'finaledit' field to today's date and the 'incioedit' field to the date
-        exactly one year ago from today.
-        """
-
         today = datetime.today().strftime('%Y-%m-%d')
         one_month_ago = (datetime.today() - relativedelta(months=12)).strftime('%Y-%m-%d')
         self.finaledit.setDate(QDate.fromString(today, 'yyyy-MM-dd'))
@@ -350,13 +559,13 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         project = QgsProject.instance()
         project.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
         if self.output_folder is None:
-            self.pop_aviso("Please select a output folder first.")
+            self.pop_aviso_auth("Please select a output folder first.")
             return
 
         existing_layers = QgsProject.instance().mapLayers().values()
         layer_names = [layer.name() for layer in existing_layers]
         if "Google Hybrid" not in layer_names:
-            self.pop_aviso("Please load the Google Hybrid layer first.")
+            self.pop_aviso_auth("Please load the Google Hybrid layer first.")
             return
 
         # Get the extent of the current map canvas
@@ -430,13 +639,19 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
             None
         """
         name = f"{self.series_indice.currentText()}_{self.vector_layer_combobox.currentText()}_time_series.csv"
-        caminho,_ = QFileDialog.getSaveFileName(self,"Salvar",name,".csv (*.csv)")
-        if caminho == '':
+        caminho, _ = QFileDialog.getSaveFileName(self, "Salvar", name, "CSV Files (*.csv)")
+        if not caminho:
             return
-        arquivo = open(caminho, 'w', encoding = 'latin')
-        arquivo.write(self.df_aux.to_csv(decimal = '.', sep=',', index = False, encoding = "latin", lineterminator='\n'))
-        arquivo.close()
-        #os.startfile(caminho)
+        with open(caminho, 'w', encoding='latin-1') as arquivo:
+            arquivo.write(self.df_aux.to_csv(decimal='.', sep=',', index=False, encoding="latin-1", lineterminator='\n'))
+        
+        # Open the file after saving (platform-specific)
+        if platform.system() == 'Windows':
+            os.startfile(caminho)
+        elif platform.system() == 'Darwin':  # macOS
+            subprocess.call(['open', caminho])
+        else:  # Linux and other Unix-like systems
+            subprocess.call(['xdg-open', caminho])
 
     def datasrecorte_clicked(self):
         """
@@ -644,67 +859,98 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         # 4. Move the window to the new top-left position.
         self.move(qtRectangle.topLeft())
 
-    def resizeEvent(self, event):
-        """
-        Handles the resize event for the dialog window.
+    def resizeEvent(self, size):
+    
+        self.setMinimumSize(0, 0)  # Remove minimum size constraint
+        self.setMaximumSize(16777215, 16777215)  # Rem
 
-        Args:
-            event (str): The type of resize event ('pequeno' or 'grandao').
-        """
-        if event == 'pequeno':
-            self.resize(445, 290)
-        elif event == 'grandao':
-            self.resize(1145, 610)
+        if size == 'small':
+            self.resize(485, 320)
+            self.setFixedSize(self.width(), self.height())  # Lock to small size
+        elif size == 'big':
+            self.resize(1145, 575)
             self.centralizar()
+            self.setFixedSize(self.width(), self.height())  # Lock to big size
 
     def on_tab_changed(self, index):
         #print(f"Tab changed to index: {index}")
         if not self.autentication:
             self.tabWidget.setCurrentIndex(0)
             return
-        if index == 0:
-                    self.resizeEvent('pequeno')  
-        elif index == 1:
-                    self.resizeEvent('pequeno')
-        elif index == 2:
-                    self.resizeEvent('pequeno') 
-        elif index == 3:
-            self.resizeEvent('grandao')
+        if index in [0, 1, 2, 3, 4, 5, 6]:
+            self.resizeEvent('small')
+        elif index == 7:
+            self.resizeEvent('big')
             self.centralizar()
-        elif index == 3 and self.df is not None:
-            self.resizeEvent('grandao')
+        elif index == 7 and self.df is not None:
+            self.resizeEvent('big')
             self.centralizar()
             self.plot_timeseries()
 
     def next_clicked(self):
-        current_index = self.tabWidget.currentIndex()
-        next_index = (current_index + 1) % self.tabWidget.count()
-        self.tabWidget.setCurrentIndex(next_index)
+        self.tabWidget.setCurrentIndex((self.tabWidget.currentIndex() + 1) % self.tabWidget.count())
 
     def back_clicked(self):
-        current_index = self.tabWidget.currentIndex()
-        next_index = (current_index - 1) % self.tabWidget.count()
-        self.tabWidget.setCurrentIndex(next_index)
+        self.tabWidget.setCurrentIndex((self.tabWidget.currentIndex() - 1) % self.tabWidget.count())
 
     def auth(self):
-    # Attempt to initialize Earth Engine
+        """
+        Authenticates Earth Engine and validates the default project.
+        Warnings are displayed only if the default project is invalid.
+        """
         try:
+            # Step 1: Authenticate and initialize Earth Engine
+            print("Authenticating Earth Engine...")
             ee.Authenticate()
             ee.Initialize()
-            self.pop_aviso("Authentication successful!")
-            self.autentication = True
-            # self.pushButtonNext.setEnabled(True)
-            self.tabWidget.setCurrentIndex(1)
             print("Authentication successful!")
 
-        except ee.EEException as e:
-            if "Earth Engine client library not initialized" in str(e):
-                self.pop_aviso("Authentication failed. Please authenticate.")
-                print("Authentication failed. Please authenticate.")
-            else:
-                print(f"An error occurred: {e}")
+            # Step 2: Test default project
+            print("Testing default project...")
+            default_project_path = "projects/earthengine-legacy/assets/"  # Replace with your default project's path if known
 
-    def auth_clear(self):
+            # Attempt to list assets in the default project
+            try:
+                assets = ee.data.listAssets({'parent': default_project_path})
+                print(f"Assets in default project: {assets}")
+
+                if assets.get('assets') is not None:  # Valid project detected
+                    print("Default project is valid.")
+                    self.pop_aviso_auth("Authentication successful!")
+                    self.autentication = True
+                    self.load_vector_layers()
+                    self.load_path_sugestion()
+                    self.next_clicked()
+                else:
+                    print("Default project is valid but contains no assets.")  # No warning needed for this case
+            except ee.EEException as e:
+                # Invalid project or access issue
+                print(f"Default project validation failed: {e}")
+                self.pop_aviso_auth(f"Default project validation failed: {e}\nFollow the instructions to have a valid Google Cloud project.")
+                self.auth_clear(True)
+
+
+        except ee.EEException as e:
+            # Handle Earth Engine-specific errors
+            print(f"Earth Engine error: {e}")
+            if "Earth Engine client library not initialized" in str(e):
+                message = "Authentication failed. Please authenticate again."
+                print(message)
+                self.pop_aviso_auth(message)
+            else:
+                message = f"An error occurred during authentication or initialization: {e}"
+                print(message)
+                self.pop_aviso_auth(message)
+                self.auth_clear(True)
+
+
+        except Exception as e:
+            # Handle unexpected errors
+            message = f"An unexpected error occurred: {e}"
+            print(message)
+            self.pop_aviso_auth(message)
+
+    def auth_clear(self, silent=False):
         #print('Desautenticando...')
         """Clears the Earth Engine authentication by deleting the credentials file."""
         
@@ -723,11 +969,13 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         # Check if the credentials file exists and delete it
         if os.path.exists(credentials_path):
             os.remove(credentials_path)
-            self.pop_aviso("Autenticação do Earth Engine limpa com sucesso")
-            print("Earth Engine authentication cleared successfully.")
+            if not silent:
+                message = "Earth Engine authentication cleared successfully."
+                self.pop_aviso_auth(message)
+
         else:
-            self.pop_aviso("Nenhuma credencial do Earth Engine encontrada para limpar.")
-            print("No Earth Engine credentials found to clear.")
+            message = "No Earth Engine credentials found to clear."
+            self.pop_aviso_auth(message)
 
     def get_dates(self):
         # Get the date from the QDateEdit widget
@@ -736,9 +984,51 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         self.final = self.finaledit.date().toString("yyyy-MM-dd")
         # print(f"Selected date: {self.inicio} to {self.final}")
 
+                # Get the date from the QDateEdit widget
+
         # Get the selected text from the combobox
-        self.nuvem = self.horizontalSlider_3.value()
+        self.nuvem = self.horizontalSlider_total_pixel_limit.value()
         # print(f"Nuvem limit: {self.nuvem}")
+
+    def load_path_sugestion(self):
+        """
+        Load the path suggestion based on the user's operating system.
+        """
+        system = platform.system()
+        if system == 'Windows':
+            self.output_folder = os.path.join(os.environ['USERPROFILE'], 'Downloads')
+        elif system == 'Linux':
+            self.output_folder = os.path.join(os.environ['HOME'], 'Downloads')
+        elif system == 'Darwin':  # MacOS
+            self.output_folder = os.path.join(os.environ['HOME'], 'Downloads')
+
+        # Pre-configure with a suggested directory
+        self.mQgsFileWidget.setFilePath(self.output_folder)
+
+    def pop_aviso_auth(self, aviso):
+        """
+        Displays a warning message box with the given message and Ok button.
+        Args:
+            aviso (str): The warning message to display in the message box.
+        Returns:
+            None
+        Note:
+            This method restores the override cursor before displaying the message box.
+        """
+        QApplication.restoreOverrideCursor()
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Warning!")
+        msg.setIcon(QMessageBox.Warning)
+        msg.setText(aviso)
+        
+        # Set buttons with Ok on the right
+        msg.setStandardButtons(QMessageBox.Ok)
+        
+        # Access the buttons to set custom text
+        ok_button = msg.button(QMessageBox.Ok)
+        ok_button.setText("Ok")
+        
+        msg.exec_()
 
     def pop_aviso(self, aviso):
         """
@@ -751,55 +1041,28 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
             This method restores the override cursor before displaying the message box.
         """
         QApplication.restoreOverrideCursor()
-        msg = QMessageBox(parent=self)
+        msg = QMessageBox(self)
         msg.setWindowTitle("Warning!")
         msg.setIcon(QMessageBox.Warning)
         msg.setText(aviso)
-        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)  # Add Ok and Cancel buttons
-
-        ret = msg.exec_()  # Get the result of the dialog
+        
+        # Set buttons with Ok on the right and Cancel on the left
+        msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ok)
+        
+        # Access the buttons to set custom text
+        cancel_button = msg.button(QMessageBox.Cancel)
+        ok_button = msg.button(QMessageBox.Ok)
+        cancel_button.setText("Cancel")
+        ok_button.setText("Ok")
+        
+        ret = msg.exec_()  # Display the message box
 
         if ret == QMessageBox.Ok:
-            
-            # Handle Ok button click
             print("Ok button clicked")
-            # Add your code here for what to do when Ok is clicked
             return True
         elif ret == QMessageBox.Cancel:
-            
-            # Handle Cancel button click
             print("Cancel button clicked")
-            # Add your code here for what to do when Cancel is clicked
             return False
-
-    # def load_vector_layers(self):
-    #     """
-    #     Loads vector layers into the vector_layer_combobox and stores their IDs.
-
-    #     This method iterates through all layers in the current QGIS project,
-    #     filters out the vector layers, and adds their names to the vector_layer_combobox.
-    #     It also stores the layer IDs in a dictionary for later use.
-    #     """
-    #     # Get all layers in the current QGIS project
-    #     layers = QgsProject.instance().mapLayers().values()
-        
-    #     # Clear the combobox and the dictionary
-    #     self.vector_layer_combobox.clear()
-    #     self.vector_layer_ids = {}
-        
-    #     # Iterate through the layers and add vector layers to the combobox
-    #     for layer in layers:
-    #         if layer.type() == QgsMapLayer.VectorLayer:
-    #             layer_name = layer.name()
-    #             print(f"Adding layer: {layer_name}")  # Debug: Show added layer names
-    #             self.vector_layer_combobox.addItem(layer_name)
-    #             self.vector_layer_ids[layer_name] = layer.id()
-        
-    #     # # Debug: Show the layer dictionary after loading
-    #     # print(f"Loaded vector layers: {self.vector_layer_ids}")
-        
-    #     # Call the method to handle the selected layer path
-    #     self.get_selected_layer_path()
 
     def load_vector_layers(self):
 
@@ -873,19 +1136,13 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
 
             # Retrieve vegetation index and date inputs
             vegetation_index = self.imagem_unica_indice.currentText()
-            startDate = self.dataunica.currentText()
+            date = [self.dataunica.currentText()]
+            
+            first_image = self.sentinel2.filter(
+                    ee.Filter.inList('date', date)
+                ).first()
 
-            # Parse the start date and calculate the end date
-            date_obj = datetime.strptime(startDate, "%Y-%m-%d")
-            endDate = (date_obj + relativedelta(days=+1)).strftime("%Y-%m-%d")
-            print(f"Filtering images from {startDate} to {endDate}")
-
-            # Filter Sentinel-2 dataset and clip by AOI
-            first_image = self.sentinel2.filterDate(startDate, endDate).first()
-            if not first_image:
-                print("No Sentinel-2 images found for the specified date range.")
-                return
-
+            # Clip image to AOI
             first_image = first_image.clip(self.aoi)
 
             # Calculate the selected vegetation index
@@ -910,12 +1167,6 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
                         'L': L
                     }
                 ).rename('SAVI')
-            else:
-                print(f"Unsupported vegetation index: {vegetation_index}")
-                return
-
-            # Get the image acquisition date
-            date = ee.Date(first_image.get('system:time_start')).format('YYYY-MM-dd').getInfo()
 
             # Prepare download URL and output filename
             url = index_image.getDownloadUrl({
@@ -923,7 +1174,7 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
                 'region': self.aoi.geometry().bounds().getInfo(),
                 'format': 'GeoTIFF'
             })
-            base_output_file = f'{vegetation_index}_{date}.tiff'
+            base_output_file = f'{vegetation_index}_{date[0]}.tiff'
             output_file = self.get_unique_filename(base_output_file)
 
             # Download the image
@@ -937,7 +1188,7 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
                 return
 
             # Prepare unique layer name
-            layer_name = f'{vegetation_index} {date}'
+            layer_name = f'{vegetation_index} {date[0]}'
             base_name = layer_name
             i = 1
             while QgsProject.instance().mapLayersByName(layer_name):
@@ -956,50 +1207,42 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
     def first_rgb(self):
         """
         Fetches the first Sentinel-2 image for the selected date, downloads it,
-        and adds it as an RGB layer in QGIS.
+        and adds it as an RGB layer in QGIS without duplication.
         """
         # Set the cursor to indicate processing
         QApplication.setOverrideCursor(Qt.WaitCursor)
+
         try:
-            # Retrieve and validate the selected start date
-            startDate = self.dataunica.currentText()
-            try:
-                date_obj = datetime.strptime(startDate, "%Y-%m-%d")
-            except ValueError as ve:
-                print(f"Invalid date format: {ve}")
-                return
+            date = [self.dataunica.currentText()]
+            print(f"Selected date: {date}")
 
-            # Calculate the end date as one day after the start date
-            endDate = (date_obj + relativedelta(days=1)).strftime("%Y-%m-%d")
-            print(f"Filtering images from {startDate} to {endDate}")
+            first_image = self.sentinel2.filter(
+                                ee.Filter.inList('date', date)
+                            ).first()
 
-            # Filter the Sentinel-2 collection for the specified date range
-            sentinel_collection = self.sentinel2.filterDate(startDate, endDate)
-            first_image = sentinel_collection.first()
+            # Print the number of days in the collection
+            # num_days = first_image.size().getInfo()
+            # print(f"Number of days in the collection (unique?): {num_days}")
 
-            # Check if any image is found
-            if not first_image:
-                print("No Sentinel-2 images found for the selected date.")
-                return
-
-            # Clip the image to the Area of Interest (AOI)
+            # Clip image to AOI
             first_image = first_image.clip(self.aoi)
 
-            # Retrieve the acquisition date of the image
-            date = ee.Date(first_image.get('system:time_start')).format('YYYY-MM-dd').getInfo()
-
-            # Define the region for downloading (bounding box of AOI)
+            # Get the acquisition date and define download region
             region = self.aoi.geometry().bounds().getInfo()['coordinates']
 
-            # Generate the download URL for the image in GeoTIFF format
-            url = first_image.getDownloadUrl({
-                'scale': 10,  # 10-meter resolution
-                'region': region,
-                'format': 'GeoTIFF'
-            })
+            # Generate download URL
+            try:
+                url = first_image.getDownloadUrl({
+                    'scale': 10,
+                    'region': region,
+                    'format': 'GeoTIFF'
+                })
+            except Exception as e:
+                self.pop_aviso_auth(f"Failed to generate download URL: {e}")
+                return
 
-            # Define a unique output file name with .tiff extension
-            base_output_file = f'Sentinel2_AllBands_{date}.tiff'
+            # Define output file
+            base_output_file = f'Sentinel2_AllBands_{date[0]}.tiff'
             output_file = self.get_unique_filename(base_output_file)
 
             # Download the image
@@ -1008,32 +1251,20 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
                 response.raise_for_status()
                 with open(output_file, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:  # Filter out keep-alive chunks
+                        if chunk:
                             f.write(chunk)
-                print(f"Sentinel-2 all bands image downloaded as {output_file}")
+                print(f"Image downloaded to {output_file}")
             except requests.exceptions.RequestException as e:
-                print(f"Error downloading the image: {e}")
+                self.pop_aviso_auth(f"Error downloading image: {e}")
                 return
 
-            # Define the layer name
-            layer_name = f'Sentinel-2 RGB {date}'
-
-            # **Prevent Duplicate Layers by Checking Existing Layers**
+            # Add the image as a raster layer in QGIS
+            layer_name = f'Sentinel-2 RGB {date[0]}'
             existing_layers = QgsProject.instance().mapLayersByName(layer_name)
-            if existing_layers:
-                base_name = layer_name
-                i = 1
-                while QgsProject.instance().mapLayersByName(layer_name):
-                    layer_name = f"{base_name}_{i}"
-                    i += 1
-                print(f"Layer name adjusted to '{layer_name}' to ensure uniqueness.")
 
-            # Create a QGIS raster layer from the downloaded GeoTIFF
             layer = QgsRasterLayer(output_file, layer_name)
-
-            # Verify that the layer is valid
             if not layer.isValid():
-                print(f"Failed to load layer: {output_file}")
+                self.pop_aviso_auth(f"Failed to load the layer: {output_file}")
                 return
 
             # Set min and max values for each band (Red, Green, Blue)
@@ -1077,31 +1308,13 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
             # Set the renderer to the layer
             layer.setRenderer(renderer)
 
-            # **Add the raster layer to the QGIS project only once**
-            QgsProject.instance().addMapLayer(layer)
-            print(f"Layer '{layer_name}' added to QGIS.")
-
-            # **Move the layer to the top of the layer stack**
-            layer_tree_root = QgsProject.instance().layerTreeRoot()
-            layer_node = layer_tree_root.findLayer(layer.id())
-            if layer_node:
-                layer_tree_root.insertChildNode(0, layer_node)  # Directly move the node to the top
-                print(f"Layer '{layer_name}' moved to the top of the layer stack.")
-            else:
-                print(f"Layer '{layer_name}' not found in the layer tree.")
-
-            # Access the QGIS interface and map canvas
-            iface = qgis.utils.iface
-            canvas = iface.mapCanvas()  # Access the active map canvas
-
-            # Ensure the canvas CRS matches the layer CRS
-            canvas.setDestinationCrs(layer.crs())
-
-            # Zoom to the layer's extent
-            layer_extent = layer.extent()
-            canvas.setExtent(layer_extent)
-            canvas.refresh()
-            print(f"Zoomed to layer extent: {layer_extent.toString()}")
+            # Add the raster layer to the QGIS project and insert it at the top of the layer tree
+            QgsProject.instance().addMapLayer(layer, False)
+            root = QgsProject.instance().layerTreeRoot()
+            root.insertChildNode(0, QgsLayerTreeLayer(layer))
+            iface.setActiveLayer(layer)
+        except Exception as e:
+            self.pop_aviso_auth(f"An error occurred: {e}")
         finally:
             QApplication.restoreOverrideCursor()
 
@@ -1172,25 +1385,19 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         print(f"Selected dates for time series: {Date_list_selection}")
 
 
-        Original_list = self.sentinel2.aggregate_array('system:time_start').getInfo()
+        print("Final number of images before:", self.sentinel2.size().getInfo())
+        # Print the dates of the images in the collection for debugging purposes
+        dates_in_collection = self.sentinel2.aggregate_array('date').getInfo()
+        print(f"Dates in the collection: {dates_in_collection}")
 
-        # print("Final number of images before:", self.sentinel2.size().getInfo())
-
-        Date_list_selection = [int(datetime.strptime(date, '%Y-%m-%d').timestamp()) for date in Date_list_selection]
-        Original_list = list(map(int, Original_list))
-        # Convert each timestamp in Original_list to a formatted date string
-        formatted_dates_original = [datetime.fromtimestamp(ts / 1000).strftime('%Y-%m-%d') for ts in Original_list]
-        df = pd.DataFrame(list(zip(Original_list, formatted_dates_original)), columns =['Original_list', 'formatted_dates_original'])
-        formatted_dates_selection = [datetime.fromtimestamp(ts).strftime('%Y-%m-%d') for ts in Date_list_selection]
-        new = df[df['formatted_dates_original'].isin(formatted_dates_selection)].Original_list.tolist()
-        # new = list(map(str, new))
+        print(f"Selected dates (timestamps): {Date_list_selection}")
 
         # Filter the collection by the dates
         sentinel2_selected_dates = self.sentinel2.filter(
-            ee.Filter.inList('system:time_start', ee.List(new))
+            ee.Filter.inList('date', ee.List(Date_list_selection))
         )
 
-        # print("Final number of images after:", sentinel2_selected_dates.size().getInfo())
+        print("Final number of images after:", sentinel2_selected_dates.size().getInfo())
 
         # Calculate the specified vegetation index for each image in the collection
         def calculate_index(image):
@@ -1228,8 +1435,9 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
             final_image = index_collection.median()
         elif metrica == 'Amplitude':
             final_image = index_collection.max().subtract(index_collection.min())
-        else:
-            raise ValueError(f"Invalid metric: {metrica}")
+        elif metrica == 'Standard Deviation':
+            final_image = index_collection.reduce(ee.Reducer.stdDev())
+
         
         final_image = final_image.clip(self.aoi.geometry())
 
@@ -1301,6 +1509,60 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         self.aoi_ckecked_function()
         # self.check_next_button()
 
+    def index_explain(self):
+        vegetation_indices = {
+            "NDVI": """
+            <h3>Normalized Difference Vegetation Index (NDVI)</h3>
+            <p>The Normalized Difference Vegetation Index (NDVI) is a widely used remote sensing index that quantifies vegetation greenness and health. It is calculated using the formula:</p>
+            <pre>(NIR - RED) / (NIR + RED)</pre>
+            <p>where NIR and RED represent the reflectance in the near-infrared and red bands, respectively. NDVI values range from -1 to +1, with higher values indicating healthier and denser vegetation. NDVI is commonly used for:</p>
+            <ul>
+            <li>Monitoring crop health and vigor</li>
+            <li>Estimating biomass and productivity</li>
+            <li>Assessing drought impacts and vegetation stress</li>
+            <li>Mapping land cover and vegetation types</li>
+            </ul>
+            """,
+            "GNDVI": """
+            <h3>Green Normalized Difference Vegetation Index (GNDVI)</h3>
+            <p>The Green Normalized Difference Vegetation Index (GNDVI) is a variation of NDVI that uses the green band instead of the red band. It is calculated as:</p>
+            <pre>(NIR - GREEN) / (NIR + GREEN)</pre>
+            <p>where NIR and GREEN represent the reflectance in the near-infrared and green bands, respectively. GNDVI is more sensitive to chlorophyll concentration and is particularly useful for detecting:</p>
+            <ul>
+            <li>Variations in canopy chlorophyll content</li>
+            <li>Plant stress and nutrient deficiencies</li>
+            <li>Crop health and vigor</li>
+            </ul>
+            """,
+            "EVI": """
+            <h3>Enhanced Vegetation Index (EVI)</h3>
+            <p>The Enhanced Vegetation Index (EVI) is designed to optimize the vegetation signal while minimizing atmospheric and soil background influences. It is calculated using the formula:</p>
+            <pre>2.5 * ((NIR - RED) / (NIR + 6 * RED - 7.5 * BLUE + 1))</pre>
+            <p>where NIR, RED, and BLUE represent the reflectance in the near-infrared, red, and blue bands, respectively. EVI is particularly effective in areas with dense vegetation and is used for:</p>
+            <ul>
+            <li>Analyzing canopy structure and leaf area index (LAI)</li>
+            <li>Estimating vegetation productivity and growth</li>
+            <li>Monitoring seasonal and interannual vegetation dynamics</li>
+            </ul>
+            """,
+            "SAVI": """
+            <h3>Soil-Adjusted Vegetation Index (SAVI)</h3>
+            <p>The Soil-Adjusted Vegetation Index (SAVI) is an index that adjusts for soil brightness in areas with sparse vegetation. It is calculated using the formula:</p>
+            <pre>(1 + L) * ((NIR - RED) / (NIR + RED + L))</pre>
+            <p>where NIR and RED represent the reflectance in the near-infrared and red bands, respectively, and L is a soil brightness correction factor, typically set to 0.5 (L=0.5 for this plugin porposes). SAVI is useful for:</p>
+            <ul>
+            <li>Analyzing vegetation in arid and semi-arid regions</li>
+            <li>Monitoring vegetation in areas with significant soil exposure</li>
+            <li>Improving vegetation signal in heterogeneous landscapes</li>
+            </ul>
+            """
+        }
+
+        explanation = vegetation_indices.get(self.series_indice.currentText())
+        self.textBrowser_index_explain.setHtml(explanation)
+
+
+
     def load_vector_function(self):
         shapefile_path = self.selected_aio_layer_path
         
@@ -1370,18 +1632,12 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
                 # Create a FeatureCollection with the feature
                 self.aoi = ee.FeatureCollection([feature])
 
-                buffer = int(self.buffer.currentText())
-                print(f"Buffer: {buffer}")
-                if buffer > 0:
-                    self.aio = self.aoi.map(lambda feature: feature.buffer(buffer))
-
-
                 print("AOI defined successfully.")
+                self.find_area()
                 
                 self.aoi_ckecked  = True
                 self.aoi_ckecked_function()
 
-                # self.check_next_button()
             else:
                 
                 print("The geometry is not a valid type (Polygon or MultiPolygon).")
@@ -1412,8 +1668,8 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         print(f"Start date: {start}, End date: {end}")
         print("Opening NASA POWER data for the selected location...")
 
-        start_date = datetime.strptime(start, "%Y-%m-%d")
-        end_date = datetime.strptime(end, "%Y-%m-%d")
+        start_date = datetime.strptime(str(start), "%Y-%m-%d")
+        end_date = datetime.strptime(str(end), "%Y-%m-%d")
 
         new_start = start_date.replace(day=1).strftime("%Y%m%d")
         new_end = (end_date.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
@@ -1436,152 +1692,94 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         self.df_nasa = monthly_sum
         self.plot_timeseries()
 
+    def find_area(self):
+        area_km2 = self.aoi.geometry().area().getInfo() / 1e6  # Convert from square meters to square kilometers
+        area_ha = area_km2 * 100  # Convert from square kilometers to hectares
+        print(f"Area: {area_km2:.2f} km² ({area_ha:.2f} ha)")
+        self.aoi_area.setText(f"AOI Total Area: {area_km2:.2f} km² ({area_ha:.2f} hectares)")
+        return area_km2
+
     def aoi_ckecked_function(self):
         if self.aoi_ckecked and self.folder_set:
-            self.pushButtonNext.setEnabled(True)
+            self.QPushButton_next.setEnabled(True)
         else:
-            self.pushButtonNext.setEnabled(False)
+            self.QPushButton_next.setEnabled(False)
 
-    def apply_filter_clicked(self):
-        if not self.customfilter.isChecked():
-            self.loadtimeseries_clicked()
-            return
-        else:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        self.recorte_datas = None
-        self.load_vector_function()
-        self.get_dates()
-
-        sentinel2 = self.sentinel2
-
-        # Define a function to mask clouds and shadows in the images
-        def mask_cloud_and_shadows(image):
-            # Check if the cloud probability and snow probability bands are available
-            band_names = image.bandNames()
-            has_cloud_prob = band_names.contains('MSK_CLDPRB')
-            has_snow_prob = band_names.contains('MSK_SNWPRB')
-
-            # Create masks based on the availability of the bands
-            cloud_mask = ee.Image(1) if not has_cloud_prob else image.select('MSK_CLDPRB').lt(1)
-            snow_mask = ee.Image(1) if not has_snow_prob else image.select('MSK_SNWPRB').lt(1)
-
-            # Scene classification layer
-            scl = image.select('SCL')
-            shadow_mask = scl.neq(3)  # Shadow class
-            cirrus_mask = scl.neq(10)  # Cirrus class
-
-            # Combine all masks
-            mask = cloud_mask.And(snow_mask).And(shadow_mask).And(cirrus_mask)
-            return image.updateMask(mask)
-
-        # Apply the cloud and shadow mask function to the image collection
-        masked_sentinel2 = sentinel2.map(mask_cloud_and_shadows)
-
-        valid_pixel_ratio_threshold = self.horizontalSlider.value()/100
-
-        # Assuming 'aoi' is a predefined FeatureCollection
-        aoi_geometry = self.aoi.first().geometry()
-
-        # Calculate the area of the AOI geometry in square meters
-        aoi_area = aoi_geometry.area()
-
-        def calculate_valid_pixel_ratio(image):
-            # Select the QA60 band which contains cloud mask information
-            qa = image.select('QA60')
-            
-            # Identiffy non-cloudy pixels (QA60 == 0)
-            non_cloudy = qa.eq(0)
-            
-            # Count the number of valid (non-cloudy) pixels within the AOI
-            valid_pixels = non_cloudy.reduceRegion(
-                reducer=ee.Reducer.sum(),
-                geometry=aoi_geometry,
-                scale=20,  # Updated scale to 20 meters for QA60
-                bestEffort=True,
-                maxPixels=1e9
-            ).get('QA60')
-            
-            # Calculate the total number of pixels in the AOI
-            # Since QA60 has 20m resolution, each pixel represents 400 m²
-            total_pixels = ee.Number(aoi_area).divide(400).round()
-            
-            # Calculate the ratio of valid pixels to total pixels
-            valid_pixel_ratio = ee.Number(valid_pixels).divide(total_pixels)
-            
-            # Set the valid pixel ratio as a property of the image
-            return image.set('valid_pixel_ratio', valid_pixel_ratio)
-
-        # Map the valid pixel ratio calculation function over the image collection
-        masked_sentinel2_ratio = masked_sentinel2.map(calculate_valid_pixel_ratio)
-
-        # Create a filter to keep images with valid_pixel_ratio greater than or equal to the threshold
-        coverage_filter = ee.Filter.gte('valid_pixel_ratio', valid_pixel_ratio_threshold)
-
-        # Apply the filter to get the final image collection with sufficient valid pixel coverage
-        retained_covering_images = masked_sentinel2_ratio.filter(coverage_filter)
-
-        # Get the number of images before filtering by valid pixel ratio
-        # num_images_before = masked_sentinel2.size().getInfo()
-        # print(f"Number of images before filtering by valid pixel ratio: {num_images_before}")
-
-        # Get the number of images in the final collection after filtering
-        num_images_final = retained_covering_images.size().getInfo()
-        # print(f"Number of images after filtering by valid pixel ratio: {num_images_final}")
-
-        if num_images_final < 10:
-            self.pop_aviso("No images found after filtering. Please adjust the threshold ratio.")
-            return
-        
-        if self.remove_cloudy.isChecked():
-            self.sentinel2 = retained_covering_images
-            
-        else:
-            # Get the list of image IDs from the retained_covering_images collection
-            image_ids = retained_covering_images.aggregate_array('system:index').getInfo()
-
-            # Filter the original sentinel2 collection using the list of image IDs
-            filtered_sentinel2 = sentinel2.filter(ee.Filter.inList('system:index', image_ids))
-
-            # Print the number of images in the filtered collection
-            # num_filtered_images = filtered_sentinel2.size().getInfo()
-            # print(f"Number of images in the filtered Sentinel-2 collection: {num_filtered_images}")
-            self.sentinel2 = filtered_sentinel2
-
-        self.calculate_timeseries()      
-   
     def resetting(self):
         self.recorte_datas = None
         self.load_vector_function()
         self.get_dates()
-        self.customfilter.setChecked(False)
+        # self.customfilter.setChecked(False)
         #self.remove_cloudy.setChecked(False)
         self.filtro1.setChecked(False)
         self.filtro_grau.setCurrentIndex(0)
         self.window_len.setCurrentIndex(0)
 
     def loadtimeseries_clicked(self):
+        # Find the centroid of the AOI and check if the area is within the limit
         area = self.find_centroid()
-        if area >=100:
+        if area >= 100:
             self.pop_aviso(f"Area too large ({area:.2f} km²). The limit is 100 km².")
             return
         
+        # Reset settings and set the cursor to indicate processing
         self.resetting()
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        # Definir a coleção de imagens Sentinel-2 com filtragem por porcentagem de nuvens
+        # Retrieve user inputs for date range, cloud percentage, and AOI
+        inicio = self.inicio
+        final = self.final
+        nuvem = self.nuvem
+        aoi = self.aoi
+        coverage_threshold = self.horizontalSlider_aio_cover.value() / 100
+        local_pixel_limit = self.horizontalSlider_local_pixel_limit.value()
+        print(f"Coverage threshold: {coverage_threshold}")
+
+        # Define the Sentinel-2 image collection with filtering by date, bounds, and cloud percentage
         sentinel2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
-            .filterDate(self.inicio, self.final) \
-            .filterBounds(self.aoi) \
-            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', self.nuvem))
-        
+            .filterDate(inicio, final) \
+            .filterBounds(aoi) \
+            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', nuvem)) \
+            .map(lambda image: image.set('date', image.date().format('YYYY-MM-dd')))
+              
+        # Apply AOI coverage filter to the image collection
+        sentinel2 = self.AOI_coverage_filter(sentinel2, aoi, coverage_threshold)
 
-        # Step 5: Define Coverage Ratio Function
-        # -------------------------------
-        aoi_geometry = self.aoi.first().geometry()
+        sentinel2 = self.filter_within_AOI(sentinel2, aoi, local_pixel_limit)
+
+        # Apply cloud and shadow mask if the checkbox is checked
+        if self.mask.isChecked():
+            sentinel2 = self.SCL_filter(sentinel2, aoi)
+
+        sentinel2 = self.uniqueday_collection(sentinel2)
+
+        # Store the filtered image collection in the instance variable
+        self.sentinel2 = sentinel2
+
+        # Calculate the time series and plot it
+        self.calculate_timeseries()
+        self.plot_timeseries()
+
+    def uniqueday_collection(self, sentinel2):
+        # Step 1: Aggregate timestamps from the ImageCollection
+        original_timestamps = sentinel2.aggregate_array('system:time_start').getInfo()
+
+        # Step 2: Convert timestamps to formatted dates
+        formatted_dates = [datetime.fromtimestamp(ts / 1000).strftime('%Y-%m-%d') for ts in original_timestamps]
+
+        # Step 3: Identify unique dates and map them back to the original timestamps
+        df = pd.DataFrame(list(zip(original_timestamps, formatted_dates)), columns=['timestamp', 'date'])
+        first_timestamps_per_date = df.groupby('date')['timestamp'].min().tolist()
+
+        # Step 4: Filter the collection to include only the first image for each unique date
+        return sentinel2.filter(
+            ee.Filter.inList('system:time_start', ee.List(first_timestamps_per_date))
+        )
+    
+    def AOI_coverage_filter(self, sentinel2, aoi, coverage_threshold):
+        #Coverage Ratio Function
+        aoi_geometry = aoi.first().geometry()
         aoi_area = aoi_geometry.area()
-
-        coverage_threshold = self.horizontalSlider_2.value()/100
 
         def calculate_coverage_ratio(image):
             """
@@ -1620,26 +1818,78 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         coverage_filter = ee.Filter.gte('coverage_ratio', coverage_threshold)
 
         # Apply the filter to get the final collection
-        fully_covering_images = sentinel2_with_ratio.filter(coverage_filter)
+        covering_colection = sentinel2_with_ratio.filter(coverage_filter)
 
-        # # Get the number of images before filtering
-        # initial_count = sentinel2.size().getInfo()
+        # Get the number of images before filtering
+        initial_count = sentinel2.size().getInfo()
 
-        # # Get the number of images after coverage filtering
-        # filtered_count = fully_covering_images.size().getInfo()
+        # Get the number of images after coverage filtering
+        filtered_count = covering_colection.size().getInfo()
 
-        # print(f"Number of images before coverage filtering: {initial_count}")
-        # print(f"Number of images with >= {coverage_threshold*100}% AOI coverage: {filtered_count}")
+        print(f"Number of images before coverage filtering: {initial_count}")
+        print(f"Number of images with >= {coverage_threshold*100}% AOI coverage: {filtered_count}")  
 
-        
-        self.sentinel2 = fully_covering_images
-        
-        self.sentinel2_aux = fully_covering_images
+        return covering_colection
 
-        self.calculate_timeseries()
+    def filter_within_AOI(self, sentinel2, aoi, valid_pixel_threshold):
+        def mask_cloud_and_shadows(image):
+            # Scene classification layer
+            scl = image.select('SCL')
+            # Combine masks for cloud, snow, shadow
+            mask = scl.neq(3).And(scl.neq(8)).And(scl.neq(9))
+            masked_image = image.updateMask(mask)
+            
+            # Calculate the percentage of valid pixels
+            total_pixels = image.select(0).reduceRegion(
+                reducer=ee.Reducer.count(),
+                geometry=aoi,
+                scale=10
+            ).get('B1')
+            
+            valid_pixels = masked_image.select(0).reduceRegion(
+                reducer=ee.Reducer.count(),
+                geometry=aoi,
+                scale=10
+            ).get('B1')
+            
+            percentage_valid = ee.Number(valid_pixels).divide(total_pixels).multiply(100)
+            
+            # Add the percentage of valid pixels as a property
+            return masked_image.set('percentage_valid_pixels', percentage_valid)
 
+            # Apply the cloud and shadow mask function to the image collection
+        sentinel2_masked =  sentinel2.map(mask_cloud_and_shadows)
+
+        # Filter the collection based on the valid pixel threshold
+        filtered_collection = sentinel2_masked.filter(ee.Filter.gte('percentage_valid_pixels', valid_pixel_threshold))
+
+        # Get the number of images in the filtered collection
+        filtered_count = filtered_collection.size().getInfo()
+
+        masked_timestamps = filtered_collection.aggregate_array('system:time_start').getInfo()
+
+        return sentinel2.filter(
+            ee.Filter.inList('system:time_start', ee.List(masked_timestamps))
+        )
+
+    def SCL_filter(self, sentinel2, aoi):
+        def mask_cloud_and_shadows(image):
+            # Scene classification layer
+            scl = image.select('SCL')
+            # Combine masks for cloud, snow, shadow, and cirrus
+            mask = scl.neq(3).And(scl.neq(8)).And(scl.neq(9).And(scl.neq(10)))
+            return image.updateMask(mask)
+
+            # Apply the cloud and shadow mask function to the image collection
+        return sentinel2.map(mask_cloud_and_shadows)
+ 
     def calculate_timeseries(self):
-        vegetation_index = self.series_indice.currentText()    
+        vegetation_index = self.series_indice.currentText()
+
+        # Buffer the AOI geometry inward by 10 meters (adjust distance as needed)
+        buffer_distance = -self.horizontalSlider_buffer.value()
+        print(f"Buffer distance: {buffer_distance} meters")
+        aoi = self.aoi.map(lambda feature: feature.buffer(buffer_distance))
 
         # Define the vegetation index calculation in a function
         def calculate_index(image):
@@ -1677,12 +1927,12 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
             # Calculate mean value for the index over AOI
             mean_index = index_image.reduceRegion(
                 reducer=ee.Reducer.mean(),
-                geometry=self.aoi.geometry(),
+                geometry=aoi,
                 scale=10,
                 bestEffort=True
             ).get('index')
             
-            return image.set({'date': image.date().format('YYYY-MM-dd'), 'mean_index': mean_index})
+            return image.set({'mean_index': mean_index})
 
         # Map the calculation function over the collection and get results
         result = self.sentinel2.map(calculate_index)
@@ -1691,14 +1941,13 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         # Retrieve dates and mean index values separately using aggregate_array
         dates = result.aggregate_array('date').getInfo()
         mean_indices = result.aggregate_array('mean_index').getInfo()
+        # print(f"Dates: {dates}")
+        # print(f"Mean indices: {mean_indices}")
 
-        # Combine the dates and mean indices into a list of dictionaries
-        avg_index_values = [{'date': date, 'average_index': index} for date, index in zip(dates, mean_indices)]
+        # Combine the dates and mean indices into a DataFrame
+        df = pd.DataFrame({'date': dates, 'average_index': mean_indices})
 
-        # Convert to DataFrame and group by date
-        df = pd.DataFrame(avg_index_values)
-        df = df.groupby('date')['average_index'].mean().reset_index()
-        #print(df)
+        print(df)
 
         # Optional: Smoothing or further processing
         self.df = df.copy()
@@ -1726,7 +1975,7 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         if self.recorte_datas:
             df = df[df['date'].isin(self.recorte_datas)]
             self.df_aux = df.copy()
-        print(self.df_aux)
+
 
         if self.window_len.count() == 0:
                     self.window_len.clear()
@@ -1743,7 +1992,7 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
             print(f'Window length too large. Using maximum value: {window_length}')
 
         df['smoothed_index'] = savgol_filter(df['average_index'], window_length=window_length, polyorder=polyorder)
-        #print(df)
+        print(df)
 
         self.df_aux = df.copy()
 
@@ -1757,13 +2006,16 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         if self.filtro1.isChecked():
             self.fig = go.Figure()
             self.fig.add_trace(go.Scatter(x=df['date'], y=df['average_index'], mode='lines', name=self.series_indice.currentText(), line=dict(color='green')))
-            self.fig.add_trace(go.Scatter(x=df['date'], y=df['smoothed_index'], mode='lines', name=self.series_indice.currentText()+' filtered', line=dict(color='purple')))
+            self.fig.add_trace(go.Scatter(x=df['date'], y=df['smoothed_index'], mode='lines', name=f"{self.series_indice.currentText()} filtered", line=dict(color='purple')))
         else:
             self.fig = go.Figure()
             self.fig.add_trace(go.Scatter(x=df['date'], y=df['average_index'], mode='lines', name=self.series_indice.currentText(), line=dict(color='green')))
        
-        self.fig.update_layout(xaxis_title='Date', yaxis_title=self.series_indice.currentText(), title='Time Series - '+self.series_indice.currentText() +' - '+ self.vector_layer_combobox.currentText()
-                               +'               Image count: '+ str(len(df)))
+        self.fig.update_layout(
+            xaxis_title='Date', 
+            yaxis_title=self.series_indice.currentText(), 
+            title=f"Time Series - {self.series_indice.currentText()} - {self.vector_layer_combobox.currentText()}               Image count: {len(df)}"
+        )
     
         self.fig.update_traces(hovertemplate='date = %{x|%Y-%m-%d}<br>average_ndvi = %{y:.2f}<extra></extra>')
         
@@ -1812,7 +2064,8 @@ class RAVIDialog(QtWidgets.QDialog, FORM_CLASS):
         self.webView.setHtml(html)
         print('ok plot1')
 
-        self.tabWidget.setCurrentIndex(3)
+    
+        self.tabWidget.setCurrentIndex(7)
         self.showNormal()
         QApplication.restoreOverrideCursor()
 

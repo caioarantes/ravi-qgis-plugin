@@ -81,7 +81,7 @@
     <bool>false</bool>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <property name="usesScrollButtons">
     <bool>true</bool>
@@ -241,6 +241,20 @@ p, li { white-space: pre-wrap; }
      <property name="icon">
       <iconset>
        <normaloff>../medias/open-in-browser.svg</normaloff>../medias/open-in-browser.svg</iconset>
+     </property>
+    </widget>
+    <widget class="QgsMapLayerComboBox" name="mMapLayerComboBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>200</y>
+       <width>151</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="filters">
+  <!-- Removed Qgis:: enum values because PyQt5.uic cannot resolve Qgis C++ enums
+       The filter will be configured programmatically if needed. -->
      </property>
     </widget>
    </widget>
@@ -4499,6 +4513,11 @@ p, li { white-space: pre-wrap; }
    <class>QgsFilterLineEdit</class>
    <extends>QLineEdit</extends>
    <header>qgsfilterlineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsmaplayercombobox.h</header>
   </customwidget>
   <customwidget>
    <class>QgsPasswordLineEdit</class>

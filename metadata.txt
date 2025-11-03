@@ -44,5 +44,5 @@ Category of the plugin: Raster, Vector, Database or Web
 server=False
 
 #QT6 support is comming soon
-#supportsQt6=True
+supportsQt6=True
 

@@ -20,58 +20,51 @@ email                : caiosimplicioarante@gmail.com
 *                                                                         *
 ***************************************************************************/
 """
+# padrão
 import os
+import re
+import io
+import sys
 import json
-import tempfile
+import time
+import shutil
+import array
 import zipfile
+import tempfile
+import datetime
+import subprocess
+import traceback
+import platform
+import webbrowser
+import urllib.request
+from functools import partial
+from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
+
+# geoespacial/científico (considere imports tardios se pesados)
+import numpy as np
+import pandas as pd
 import geopandas as gpd
 from shapely.geometry import shape, Polygon, MultiPolygon, GeometryCollection
 from shapely.ops import unary_union
-import os
-import time
-import tempfile
-import datetime
-import requests
-import re
-import sys
-import importlib
-import platform
-import subprocess
-import traceback
-import zipfile
-import json
-import webbrowser
-import io
-import array
-import qgis
-import pandas as pd
-import numpy as np
-import geopandas as gpd
-import processing
-import plotly.express as px
-import plotly.graph_objects as go
-import urllib.request
-import ee
-import shutil
-from functools import partial
-from datetime import timedelta
-from dateutil.relativedelta import relativedelta
-from shapely.geometry import shape
-from shapely.ops import unary_union
-import json
 from scipy.signal import savgol_filter
 from osgeo import gdal
-from qgis.core import QgsDistanceArea, QgsCoordinateReferenceSystem, QgsCoordinateTransform
 
+# QGIS API: use sempre os wrappers do QGIS
 from qgis.core import (
-    QgsMessageLog,
     Qgis,
+    QgsApplication,
+    QgsProject,
+    QgsProcessingFeedback,
+    QgsRectangle,
+    QgsFeature,
+    QgsGeometry,
+    QgsField,
     QgsWkbTypes,
     QgsVectorLayer,
     QgsVectorFileWriter,
     QgsFeatureRequest,
-    QgsProject,
     QgsRasterLayer,
     QgsRasterShader,
     QgsColorRampShader,
@@ -85,15 +78,20 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsMultiBandColorRenderer,
     QgsContrastEnhancement,
-    QgsProcessingFeedback,
-    QgsApplication,
-    QgsRectangle,
-    QgsFeature,
-    QgsGeometry,
-    QgsField,
+    QgsDistanceArea,
 )
+from qgis.gui import (
+    QgsMapToolEmitPoint,
+    QgsRubberBand,
+    QgsMapToolCapture,
+    QgsMapToolExtent,
+    QgsMapToolPan,
+)
+from qgis.utils import iface
+
+from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt.QtCore import Qt, QEvent, QDate, QVariant, QSettings, QTimer
 from qgis.PyQt.QtGui import QFont, QColor
-from qgis.PyQt.QtCore import QDate, Qt, QVariant, QSettings, QTimer, QEvent
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -116,18 +114,13 @@ from qgis.PyQt.QtWidgets import (
     QSizePolicy,
 )
 
+# externos que podem ser opcionais (importe sob demanda se possível)
+import processing
+import plotly.express as px
+import plotly.graph_objects as go
+import ee
 
-from qgis.PyQt import uic, QtWidgets
-from qgis.PyQt.QtCore import Qt, QEvent # This specific import was duplicated multiple times, consolidating here.
-from qgis.gui import (
-    QgsMapToolEmitPoint,
-    QgsRubberBand,
-    QgsMapToolCapture,
-    QgsMapToolExtent,
-    QgsMapToolPan,
-)
-from qgis.utils import iface
-
+# seus módulos
 from .modules import (
     map_tools,
     nasa_power,
@@ -137,9 +130,7 @@ from .modules import (
     coordinate_capture,
     datasets_info,
 )
-
 from .modules.coordinate_capture import CoordinateCaptureTool
-
 # =============================================================================
 # RAVIDialog Class Definition / Definição da Classe RAVIDialog
 # =============================================================================
